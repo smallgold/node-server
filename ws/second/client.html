@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>websocket of node</title>
+  <style>
+    .up {
+      color: red;
+    }
+    .down {
+      color: green;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div id="simulation">
+      <p>AAPL: <span id="AAPL">0.00</span></p>
+      <p>MSFT: <span id="MSFT">0.00</span></p>
+      <p>AMZN: <span id="AMZN">0.00</span></p>
+      <p>GOOG: <span id="GOOG">0.00</span></p>
+      <p>YHOO: <span id="YHOO">0.00</span></p>
+    </div>
+    <button type="button" onclick="start();">start</button>
+    <button type="button" onclick="stop();">stop</button>
+  </div>
+  <script>
+    var ws = new WebSocket("ws://localhost:1000");
+    var sml = document.getElementById('simulation');
+    var isClose = false;
+    var stocks = {
+      "AAPL": 0,
+      "MSFT": 0,
+      "AMZN": 0,
+      "GOOG": 0,
+      "YHOO": 0
+    };
+    var stock_request = []
+    for ( var key in stocks) {
+      stock_request.push(key);
+    }
+    function updataUI() {
+      ws.onopen = function (e) {
+        console.log('Connection to server opened');
+        isClose = false;
+        ws.send(JSON.stringify(stock_request));
+        console.log("sened a mesg");
+      }
+      // 处理受到的消息
+      ws.onmessage = function (e) {
+        var stocksData = JSON.parse(e.data);
+        //console.log(stocksData);
+        if (isClose) {
+          return false;
+        }
+        for (var symbol in stocksData) {
+          if (stocksData.hasOwnProperty(symbol)) {
+            changeStockEntry(symbol, stocks[symbol], stocksData[symbol]);
+            stocks[symbol] = stocksData[symbol];
+          }
+        }
+      };
+      //更新UI
+      var changeStockEntry = function (symbol, originalValue, newValue) {
+        var valElem = document.getElementById(symbol);
+        valElem.innerHTML = newValue.toFixed(2);
+        if (newValue < originalValue) {
+          valElem.className = 'down';
+        } else if (newValue > originalValue) {
+          valElem.className = 'up';
+        }
+      }
+    }
+
+    updataUI();
+
+    function start() {
+      isClose = false;
+    }
+
+    function stop() {
+      isClose = true;
+    }
+  
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "node server",
+  "main": "none",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smallgold/node-server.git"
+  },
+  "author": "sg",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/smallgold/node-server/issues"
+  },
+  "homepage": "https://github.com/smallgold/node-server#readme",
+  "dependencies": {
+    "node-uuid": "^1.4.8",
+    "ws": "^5.1.0"
+  }
+}
