@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/smallgold/node-server#readme",
   "dependencies": {
+    "express": "^4.16.3",
     "node-uuid": "^1.4.8",
+    "socket.io": "^2.1.0",
     "ws": "^5.1.0"
   }
 }
