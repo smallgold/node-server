@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>socket.io</title>
+  <style>
+    #chat {
+      display: none;
+    }
+    .blue {
+      color: dodgerblue;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div id="login">
+      <h1>请输入用户名开始聊天</h1>
+      <form onsubmit="getLogin(); return false;">
+        <input type="text" name="username" id="username">
+        <button id="loginBtn">确认</button>
+      </form>
+    </div>
+    <div id="chat">
+      <h2 id="onlineNum"></h2>
+      <h3 id="chatname"></h3>
+      <ul id="messages"></ul>
+      <form onsubmit="sendMessage(); return false;">
+        <input id="m" autocomplete="off" />
+        <button>Send</button>
+      </form>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    var socket = io();
+    var login = document.getElementById('login');
+    var username = document.getElementById('username');
+    var loginBtn = document.getElementById('loginBtn');
+    var chat = document.getElementById('chat');
+    var onlineNum = document.getElementById('onlineNum');
+    var chatname = document.getElementById('chatname');
+    var m = document.getElementById('m');
+    var msgs = document.getElementById('messages');
+
+    var getLogin = function () {
+      var name = username.value;
+      var reg = /\s+/
+      if (reg.test(name)) {
+        name.value = "";
+        alert('请勿输入空格符号');
+        return
+      }
+      if (name.length > 0) {
+        socket.emit('login', {
+          username: name
+        });
+      }
+    }
+
+    socket.on('loginSuccess', function(data, num){
+      //onlineNum.innerHTML = "当前在线人数：" + num;
+      chatname.innerHTML = "你好! " + data.username;
+      
+      if (data.username === username.value) {
+        beginChat(data);
+      } else {
+        alert("用户名不匹配，请重试");
+      }
+    })
+
+    function beginChat(data) {
+      login.style.display = "none";
+      chat.style.display = "block";
+
+    }
+
+    function sendMessage() {
+      var msg = m.value;
+      socket.emit('chat message', {username: username.value, message: msg});
+      m.value = "";
+    }
+    socket.on('receiveMessage', function (data) {
+      var msgElem = document.createElement('li');
+      msgElem.innerHTML = data.username + "：" + data.message;
+      if (data.username === username.value) {
+        msgElem.className = "blue";
+      } else {
+        msgElem.className = "";
+      }
+      msgs.appendChild(msgElem);
+    });
+  </script>
+</body>
+
+</html>
