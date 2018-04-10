@@ -2,7 +2,17 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var uuid = require('node-uuid');
-var users = [];
+var users = [
+      {
+        username:"aaa",
+        message: []
+      },
+      {
+        username:"bbb",
+        message: []
+      },
+    ];
+var usersNum = 0;
 var roomInfo = {}
 
 
@@ -14,16 +24,12 @@ io.on('connection', function (socket) {
   console.log('a user connected');
   var roomID = 'room1';   // 获取房间ID
   socket.on('login', function (data) {
-    // 判断房间名是否存在
-    if (!roomInfo[roomID]) {
-      roomInfo[roomID] = [];
-    }
 
-    // 将用户昵称加入房间名单中
-    roomInfo[roomID].push(users);
+    // 将用户加入房间名单中
+    roomInfo[roomID] = users;
+
     // 加入房间
     socket.join(roomID)
-
     // 判断用户名是否存在
     var hasUser = null;
     var num = 0;
@@ -36,8 +42,11 @@ io.on('connection', function (socket) {
         hasUser = false;
       }
     }
-
+    // 登录成功进入聊天室
     if (hasUser) {
+      // 在线人数
+      usersNum++;
+      // 储存当前登录用户
       socket.username = data.username;
       socket.emit('loginSuccess', users[num], roomID);
     } else {
@@ -46,7 +55,7 @@ io.on('connection', function (socket) {
     
     var postData = {
       user: data.username,
-      len: users.length,
+      len: usersNum,
     }
     // 通知房间内人员
     io.to(roomID).emit('online',postData)
@@ -76,21 +85,22 @@ io.on('connection', function (socket) {
       return;
     }
 
-    for (var i=0; i<roomInfo[roomID].length; i++) {
-      for(var j=0; j<users.length; j++) {
-        if (roomInfo[roomID][i][j].username === socket.username) {
-          // 退出该聊天室就删除该用户
-          // roomInfo[roomID][i].splice(j,1);
-        }
+    for(var i=0; i<users.length; i++) {
+      if (roomInfo[roomID][i].username === socket.username) {
+        // 退出该聊天室就删除该用户
+        // roomInfo[roomID].splice(i,1);
+        // 在线人数
+        usersNum--;
+        break;
       }
     }
 
+    console.log(roomInfo[roomID])
     var postData = {
       user: socket.username,
-      len: users.length,
+      len: usersNum,
     }
 
-    console.log(users)
     // 退出房间
     socket.leave(roomID);
     io.to(roomID).emit('outline',postData)

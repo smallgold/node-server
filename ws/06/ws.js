@@ -28,13 +28,9 @@ io.on('connection', function (socket) {
       message: []
     })
 
-    // 判断房间名是否存在
-    if (!roomInfo[roomID]) {
-      roomInfo[roomID] = [];
-    }
+    // 将用户加入房间名单中
+    roomInfo[roomID] = users;
 
-    // 将用户昵称加入房间名单中
-    roomInfo[roomID].push(users);
     // 加入房间
     socket.join(roomID)
     // 通知房间内人员
@@ -48,10 +44,8 @@ io.on('connection', function (socket) {
       return;
     }
     for (var i=0; i<roomInfo[roomID].length; i++) {
-      for(var j=0; j<users.length; j++) {
-        if (roomInfo[roomID][i][j].username === socket.username) {
-          roomInfo[roomID][i].splice(j,1)
-        }
+      if (roomInfo[roomID][i].username === socket.username) {
+        roomInfo[roomID].splice(i,1)
       }
     }
     // 退出房间
