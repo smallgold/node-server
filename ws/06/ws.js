@@ -70,13 +70,5 @@ http.listen(1000, function () {
   console.log('listening on *:1000');
 });
 
-function wsSend() {
-
-}
-
-
-
-
-
 
 // 直接在浏览器里面运行 http://localhost:1000/ 即可

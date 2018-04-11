@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>socket.io</title>
+  <style>
+    #chat,
+    #register,
+    .container,
+    .groupsList,
+    .pop,
+    .hide {
+      display: none;
+    }
+
+    .show {
+      display: block;
+    }
+
+    .act {
+      color: red;
+    }
+
+    .blue {
+      color: dodgerblue;
+    }
+
+    .userSettings button {
+      display: none;
+    }
+
+    .userSettings:hover button {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="login">
+    <h1>登录</h1>
+    <form class="loginForm">
+      <input type="text" name="logname">
+      <button class="loginBtn">登录</button>
+      <button class="goReg">注册</button>
+    </form>
+  </div>
+  <div id="register">
+    <h1>注册</h1>
+    <form class="regForm">
+      <input type="text" name="regname">
+      <button class="regBtn">注册</button>
+    </form>
+  </div>
+  <div class="container">
+    <div class="userInfo">
+      <div class="userData"></div>
+      <div class="userTag">
+        <div class="act">朋友</div>
+        <div>群聊</div>
+      </div>
+      <div class="userSettings">
+        <p>设置</p>
+        <button class="addFriend">添加朋友</button>
+        <button class="addGroup">添加群聊</button>
+        <button class="joinGroup">加入群聊</button>
+        <button class="leaveBtn">注销</button>
+      </div>
+    </div>
+    <div class="chatList">
+      <ul class="friendsList"></ul>
+      <ul class="groupsList"></ul>
+    </div>
+    <div class="chatContent">
+      <h2 class="onlineNum"></h2>
+      <h3 class="chatname"></h3>
+      <ul id="messages"></ul>
+      <form onsubmit="sendMessage(); return false;">
+        <input id="m" autocomplete="off" />
+        <button>Send</button>
+      </form>
+    </div>
+  </div>
+  <div class="pop">
+    <div class="popCont">
+      <h2></h2>
+      <form action="">
+        <input type="text" value="">
+        <button class="addBtn">确认</button>
+      </form>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/jquery.js"></script>
+  <script>
+    $(function () {
+      var socket = io();
+      var roomID = '';
+      var userData = {};
+
+      $('.loginForm').on('submit', function (e) {
+        e.preventDefault();
+        var name = $(this).find('input').val();
+        getName(name, 'login');
+      })
+
+      $('.goReg').click(function (e) {
+        e.preventDefault();
+        show2Hide('#login', '#register');
+      })
+
+      $('.regForm').on('submit', function (e) {
+        e.preventDefault();
+        var name = $(this).find('input').val();
+        getName(name, 'register');
+      })
+
+      $('.userTag div').click(function(){
+        var i = $(this).index();
+        $(this).addClass('act').siblings().removeClass();
+        $('.chatList').children().eq(i).show().siblings().hide();
+      })
+
+      $('.pop').click(function () {
+        $(this).hide();
+      })
+      
+      $('.popCont').click(function (e) {
+        e.stopPropagation();
+      })
+
+      addSelBtn('.addFriend');
+      addSelBtn('.addGroup');
+      addSelBtn('.joinGroup');
+
+      $('.addBtn').on('click', function (e) {
+        e.preventDefault();
+        var val = $('.popCont input').val();
+        var type = $('.popCont input').attr('data-val');
+        addSelForm(type, val, userData)
+        $('.pop').hide();
+      })
+
+      socket.on('loginSuccess', function (data) {
+        if (data == 'none') {
+          alert("该用户名未注册，请先注册后再登录");
+          return;
+        }
+
+        if (data.username === $('.loginForm').find('input').val()) {
+          beginChat(data);
+        } else {
+          alert("用户名不匹配，请重试");
+        }
+      })
+
+      socket.on('registerSuccess', function (data) {
+        if (data == 'used') {
+          alert("该用户名已注册，请换一个");
+          return;
+        }
+        alert("注册成功请登录~");
+
+        show2Hide('#register', '#login');
+      })
+
+      socket.on('online', function (data) {
+        broadcast(data, true)
+      })
+
+      socket.on('outline', function (data) {
+        broadcast(data, false)
+      })
+
+      socket.on('addGroupSuccess', function (data) {
+        var li = $('.groupsList li').eq(0).text();
+        if (li.indexOf('暂无群聊') > -1) {
+          $('.groupsList').html('<li>'+ data +'</li>')
+        } else {
+          $('.groupsList').append('<li>'+ data +'</li>')
+        }
+      })
+
+      socket.on('receiveMessage', function (data) {
+        var msgElem = document.createElement('li');
+        msgElem.innerHTML = data.username + "：" + data.message;
+        if (data.username === logName.value) {
+          msgElem.className = "blue";
+        } else {
+          msgElem.className = "";
+        }
+        msgs.appendChild(msgElem);
+      });
+
+      function show2Hide(sel1, sel2) {
+        $(sel1).hide();
+        $(sel2).show();
+      }
+
+      function getName(name, type) {
+        var reg = /\s+/
+        if (reg.test(name)) {
+          name.value = "";
+          alert('请勿输入空格符号');
+          return
+        }
+        if (name.length > 0) {
+          socket.emit(type, {
+            username: name
+          });
+        }
+      }
+
+      function addSelForm(type, val, userData) {
+        socket.emit(type, val, userData);
+      }
+
+      function beginChat(data) {
+        show2Hide('#login', '.container');
+        userData = data;
+        $('.userData').html(data.username);
+        appendList('.friendsList', data, 'friends')
+        appendList('.groupsList', data, 'group')
+      }
+
+      function appendList(ul, data, type) {
+        if (data[type].length == 0) {
+          $(ul).html('<li>暂无群聊</li>');
+        } else {
+          var str = "";
+          for ( var i=0; i<data[type].length; i++) {
+            str += '<li>'+ data[type][i] +'</li>';
+          }
+          $(ul).append(str)
+        }
+      }
+
+      function addSelBtn(sel) {
+        $(sel).on('click', function () {
+          $('.pop').show();
+          if (sel.indexOf('addFriend') > -1) {
+            $('.popCont h2').html('添加朋友')
+            $('.popCont input').attr('data-val', 'addFriend')
+          } else if (sel.indexOf('addGroup') > -1) {
+            $('.popCont h2').html('添加群聊')
+            $('.popCont input').attr('data-val', 'addGroup')
+          } else {
+            $('.popCont h2').html('加入群聊')
+            $('.popCont input').attr('data-val', 'joinGroup')
+          }
+        })
+      }
+
+      function broadcast(data, line) {
+        var msgElem = document.createElement('li');
+        if (line) {
+          if (data.user !== logName.value) {
+            msgElem.innerHTML = "Admin：" + data.user + "上线了。";
+            msgs.appendChild(msgElem);
+          }
+        } else {
+          msgElem.innerHTML = "Admin：" + data.user + "下线了。";
+          msgs.appendChild(msgElem);
+        }
+
+        onlineNum.innerHTML = "当前在线人数：" + data.len;
+      }
+
+      function sendMessage() {
+        var msg = m.value;
+        socket.emit('chat message', {
+          username: logName.value,
+          message: msg
+        });
+        m.value = "";
+      }
+
+    })
+  </script>
+</body>
+
+</html>
