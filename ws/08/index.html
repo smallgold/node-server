@@ -178,8 +178,8 @@
         broadcast(data, false)
       })
 
-      socket.on('addFriendSuccess', function (data) {
-        var li = $('.groupsList li').eq(0).text();
+      socket.on('addFriendSuccess', function (data, user) {
+        var li = $('.friendsList li').eq(0).text();
         
         switch(data) {
           case 'self':
@@ -191,17 +191,33 @@
           case 'already':
             alert('此人已在好友列表！')
             return;
+            return;
+          case 'stranger':
+            $('.strangersList li').each(function(){
+              var txt = $(this).text();
+              if (txt === user) {
+                if (li.indexOf('暂无') > -1) {
+                  $('.friendsList').html('<li>'+ user +'</li>')
+                } else {
+                  $('.friendsList').append('<li>'+ user +'</li>')
+                }
+                $(this).remove();
+              }
+            });
+            return;
         }
 
         if (li.indexOf('暂无') > -1) {
           $('.friendsList').html('<li>'+ data +'</li>')
+          console.log(1)
         } else {
           $('.friendsList').append('<li>'+ data +'</li>')
         }
       })
       
       socket.on('addStrangerSuccess', function(data) {
-        var li = $('.groupsList li').eq(0).text();
+        var li = $('.strangersList li').eq(0).text();
+        console.log(userData.id)
         if (li.indexOf('暂无') > -1) {
           $('.strangersList').html('<li>'+ data +'</li>')
         } else {

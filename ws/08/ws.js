@@ -57,7 +57,7 @@ io.on('connection', function (socket) {
       socket.emit('loginSuccess', 'none');
     }
     
-    console.log(users)
+    //console.log(users)
   });
 
   socket.on('addFriend', function(data, user){
@@ -68,9 +68,6 @@ io.on('connection', function (socket) {
       socket.emit('addFriendSuccess', 'self');
       return;
     }
-
-
-    
 
     for (var i=0; i<users.length; i++) {
       if (users[i].username === data) {
@@ -86,13 +83,25 @@ io.on('connection', function (socket) {
       for (var i=0; i<users[socket.userNum].friends.length; i++) {
         if (users[socket.userNum].friends[i] === data){
           socket.emit('addFriendSuccess', 'already');
-          break;
+          return;
         }
       }
-      
+
+      // 判断对方列表有无此陌生人
+      for (var i=0; i<users[socket.userNum].strangers.length; i++) {
+        if (users[socket.userNum].strangers[i] === data){
+          users[socket.userNum].strangers.splice(i,1);
+          users[socket.userNum].friends.push(data);
+          socket.emit('addFriendSuccess', 'stranger', data);
+          return;
+        }
+      }
+
+      // 默认添加好友后设置为对方的陌生人
       for (var i=0; i<users.length; i++) {
         if (users[i].username === data) {
           users[i].strangers.push(users[socket.userNum].username);
+          console.log(users[i].id)
           io.to(users[i].id).emit('addStrangerSuccess',users[socket.userNum].username);
           break;
         }
