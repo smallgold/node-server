@@ -11,6 +11,7 @@
     #register,
     .container,
     .groupsList,
+    .strangersList,
     .pop,
     .hide {
       display: none;
@@ -60,6 +61,7 @@
       <div class="userTag">
         <div class="act">朋友</div>
         <div>群聊</div>
+        <div>陌生人</div>
       </div>
       <div class="userSettings">
         <p>设置</p>
@@ -72,6 +74,7 @@
     <div class="chatList">
       <ul class="friendsList"></ul>
       <ul class="groupsList"></ul>
+      <ul class="strangersList"></ul>
     </div>
     <div class="chatContent">
       <h2 class="onlineNum"></h2>
@@ -139,6 +142,7 @@
         e.preventDefault();
         var val = $('.popCont input').val();
         var type = $('.popCont input').attr('data-val');
+
         addSelForm(type, val, userData)
         $('.pop').hide();
       })
@@ -174,9 +178,45 @@
         broadcast(data, false)
       })
 
+      socket.on('addFriendSuccess', function (data) {
+        var li = $('.groupsList li').eq(0).text();
+        
+        switch(data) {
+          case 'self':
+            alert('不能添加自己！');
+            return;
+          case 'none':
+            alert('没有此用户！');
+            return;
+          case 'already':
+            alert('此人已在好友列表！')
+            return;
+        }
+
+        if (li.indexOf('暂无') > -1) {
+          $('.friendsList').html('<li>'+ data +'</li>')
+        } else {
+          $('.friendsList').append('<li>'+ data +'</li>')
+        }
+      })
+      
+      socket.on('addStrangerSuccess', function(data) {
+        var li = $('.groupsList li').eq(0).text();
+        if (li.indexOf('暂无') > -1) {
+          $('.strangersList').html('<li>'+ data +'</li>')
+        } else {
+          $('.strangersList').append('<li>'+ data +'</li>')
+        }
+      })
+
       socket.on('addGroupSuccess', function (data) {
         var li = $('.groupsList li').eq(0).text();
-        if (li.indexOf('暂无群聊') > -1) {
+
+        if (data == 'none') {
+          alert('已经加入该房间！')
+        }
+
+        if (li.indexOf('暂无') > -1) {
           $('.groupsList').html('<li>'+ data +'</li>')
         } else {
           $('.groupsList').append('<li>'+ data +'</li>')
@@ -222,12 +262,13 @@
         userData = data;
         $('.userData').html(data.username);
         appendList('.friendsList', data, 'friends')
-        appendList('.groupsList', data, 'group')
+        appendList('.groupsList', data, 'groups')
+        appendList('.strangersList', data, 'strangers')
       }
 
       function appendList(ul, data, type) {
         if (data[type].length == 0) {
-          $(ul).html('<li>暂无群聊</li>');
+          $(ul).html('<li>暂无</li>');
         } else {
           var str = "";
           for ( var i=0; i<data[type].length; i++) {

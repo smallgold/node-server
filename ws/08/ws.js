@@ -1,9 +1,8 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var uuid = require('node-uuid');
-var users = [];
-var roomInfo = {}
+var users = []; // 所有用户
+var roomInfo = {} // 所有群聊
 
 
 app.get('/', function (req, res) {
@@ -16,6 +15,25 @@ app.get('/jquery.js', function (req, res) {
 
 io.on('connection', function (socket) {
   console.log('a user connected');
+  socket.on('register', function (data) {
+    // 判断用户名是否重复
+    for (var i=0; i<users.length; i++) {
+      if (data.username == users[i].username) {
+        socket.emit('registerSuccess', 'used');
+        return;
+      }
+    }
+    users.push({
+      id: socket.id,  // 用socket提供的ID进行定向推送信息或者其他事件；
+      avatar: '',
+      username: data.username,
+      friends: [],
+      groups: [],
+      strangers: [],
+    })
+    socket.emit('registerSuccess');
+  });
+
   socket.on('login', function (data) {
     // 判断用户名是否存在
     var hasUser = null;
@@ -33,6 +51,7 @@ io.on('connection', function (socket) {
     if (hasUser) {
       // 储存当前登录用户索引值
       socket.userNum = num;
+      socket.name = data.username;
       socket.emit('loginSuccess', users[num]);
     } else {
       socket.emit('loginSuccess', 'none');
@@ -41,6 +60,52 @@ io.on('connection', function (socket) {
     console.log(users)
   });
 
+  socket.on('addFriend', function(data, user){
+    // 判断所有用户有无此人
+    var hasFriend = false;
+
+    if (socket.name === data) {
+      socket.emit('addFriendSuccess', 'self');
+      return;
+    }
+
+
+    
+
+    for (var i=0; i<users.length; i++) {
+      if (users[i].username === data) {
+        hasFriend = true;
+        break;
+      } else {
+        hasFriend = false;
+      }
+    }
+
+    if (hasFriend) {
+      // 判断用户列表有无此好友
+      for (var i=0; i<users[socket.userNum].friends.length; i++) {
+        if (users[socket.userNum].friends[i] === data){
+          socket.emit('addFriendSuccess', 'already');
+          break;
+        }
+      }
+      
+      for (var i=0; i<users.length; i++) {
+        if (users[i].username === data) {
+          users[i].strangers.push(users[socket.userNum].username);
+          io.to(users[i].id).emit('addStrangerSuccess',users[socket.userNum].username);
+          break;
+        }
+      }
+
+      users[socket.userNum].friends.push(data);
+      // 添加好友成功
+      socket.emit('addFriendSuccess',data);
+    } else {
+      socket.emit('addFriendSuccess', 'none');
+    }
+  })
+
   socket.on('addGroup', function(data, user){
     var roomID = data;
     // 将用户加入房间名单中
@@ -48,16 +113,22 @@ io.on('connection', function (socket) {
       roomInfo[roomID] = []
     }
 
+    users[socket.userNum].groups.map((v)=>{
+      if (v === data){
+        socket.emit('addGroupSuccess', 'none');
+        return;
+      }
+    })
+
     roomInfo[roomID].push(user);
     // 加入房间
     socket.join(roomID)
-    console.log(socket.userNum, user.username)
+    
     if (users[socket.userNum].username === user.username) {
-      users[socket.userNum].group.push(data);
-      console.log(users)
+      users[socket.userNum].groups.push(data);
     }
 
-    // 通知房间内人员
+    // 添加群组成功
     socket.emit('addGroupSuccess',data);
   })
 
@@ -76,24 +147,6 @@ io.on('connection', function (socket) {
     // 通知房间内人员
     io.to(roomID).emit('online',postData);
   })
-
-  socket.on('register', function (data) {
-    // 判断用户名是否重复
-    for (var i=0; i<users.length; i++) {
-      if (data.username == users[i].username) {
-        socket.emit('registerSuccess', 'used');
-        return;
-      }
-    }
-    users.push({
-      id: uuid.v4(),
-      avatar: '',
-      username: data.username,
-      friends: [],
-      group: [],
-    })
-    socket.emit('registerSuccess');
-  });
 
   socket.on('disconnect', function () {
     console.log('user disconnected');
