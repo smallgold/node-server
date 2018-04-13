@@ -97,18 +97,17 @@ io.on('connection', function (socket) {
         }
       }
 
-      // 默认添加好友后设置为对方的陌生人
+      // 默认添加好友后设置自己为对方的陌生人
       for (var i=0; i<users.length; i++) {
         if (users[i].username === data) {
           users[i].strangers.push(users[socket.userNum].username);
-          console.log(users[i].id)
           io.to(users[i].id).emit('addStrangerSuccess',users[socket.userNum].username);
           break;
         }
       }
 
-      users[socket.userNum].friends.push(data);
       // 添加好友成功
+      users[socket.userNum].friends.push(data);
       socket.emit('addFriendSuccess',data);
     } else {
       socket.emit('addFriendSuccess', 'none');
@@ -116,10 +115,9 @@ io.on('connection', function (socket) {
   })
 
   socket.on('addGroup', function(data, user){
-    var roomID = data;
     // 将用户加入房间名单中
-    if (!roomInfo[roomID]) {
-      roomInfo[roomID] = []
+    if (!roomInfo[data]) {
+      roomInfo[data] = []
     }
 
     users[socket.userNum].groups.map((v)=>{
@@ -129,32 +127,39 @@ io.on('connection', function (socket) {
       }
     })
 
-    roomInfo[roomID].push(user);
+    roomInfo[data].push(user);
     // 加入房间
-    socket.join(roomID)
+    socket.join(data)
     
     if (users[socket.userNum].username === user.username) {
       users[socket.userNum].groups.push(data);
     }
 
     // 添加群组成功
-    socket.emit('addGroupSuccess',data);
+    socket.emit('addGroupSuccess', data, users);
   })
 
-  socket.on('joinRoom', function(data){
+  socket.on('joinGroup', function(data, user){
     // 将用户加入房间名单中
-    roomInfo[roomID].push(data);
+    roomInfo[data].push(user.username);
     // 在线人数
-    usersNum++;
-
+    // usersNum++;
     // 加入房间
-    socket.join(roomID) 
+    socket.join(data)
+    
+    for (var i=0; i<users.length; i++) {
+      if (users[i].username === user.username) {
+        users[i].groups.push(data);
+        break;
+      }
+    }
     var postData = {
-      user: data.username,
-      len: usersNum,
+      user: user.username,
+      groupName: data,
+      //len: usersNum,
     }
     // 通知房间内人员
-    io.to(roomID).emit('online',postData);
+    io.to(data).emit('online',postData);
   })
 
   socket.on('disconnect', function () {
