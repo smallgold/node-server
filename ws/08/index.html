@@ -6,37 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>socket.io</title>
-  <style>
-    #chat,
-    #register,
-    .container,
-    .groupsList,
-    .strangersList,
-    .pop,
-    .hide {
-      display: none;
-    }
-
-    .show {
-      display: block;
-    }
-
-    .act {
-      color: red;
-    }
-
-    .blue {
-      color: dodgerblue;
-    }
-
-    .userSettings button {
-      display: none;
-    }
-
-    .userSettings:hover button {
-      display: block;
-    }
-  </style>
+  <link rel="stylesheet" href="/ws.css">
 </head>
 
 <body>
@@ -55,8 +25,8 @@
       <button class="regBtn">注册</button>
     </form>
   </div>
-  <div class="container">
-    <div class="userInfo">
+  <div class="container clearfix">
+    <div class="userInfo fl">
       <div class="userData"></div>
       <div class="userTag">
         <div class="act">朋友</div>
@@ -65,23 +35,24 @@
       </div>
       <div class="userSettings">
         <p>设置</p>
-        <button class="addFriend">添加朋友</button>
-        <button class="addGroup">添加群聊</button>
-        <button class="joinGroup">加入群聊</button>
-        <button class="leaveBtn">注销</button>
+        <div class="userSettingsBtn">
+          <button class="addFriend">添加朋友</button>
+          <button class="addGroup">添加群聊</button>
+          <button class="joinGroup">加入群聊</button>
+          <button class="leaveBtn">注销</button>
+        </div>
       </div>
     </div>
-    <div class="chatList">
+    <div class="chatList fl">
       <ul class="friendsList"></ul>
       <ul class="groupsList"></ul>
       <ul class="strangersList"></ul>
     </div>
-    <div class="chatContent">
-      <h2 class="onlineNum"></h2>
-      <h3 class="chatname"></h3>
-      <ul id="messages"></ul>
-      <form onsubmit="sendMessage(); return false;">
-        <input id="m" autocomplete="off" />
+    <div class="chatContent fl">
+      <p class="toname"></p>
+      <ul class="messages"></ul>
+      <form class="msgForm">
+        <input class="msg" />
         <button>Send</button>
       </form>
     </div>
@@ -147,6 +118,23 @@
         $('.pop').hide();
       })
 
+      $(document).on('click', '.friendsList li, .strangersList li', function(){
+        $('.chatContent').show();
+        $('.toname').html($(this).text());
+        $(this).addClass('act');
+      })
+
+      $('.msgForm').on('submit', function (e) {
+        e.preventDefault();
+        var val = $('.msg').val();
+        socket.emit('chat message', {
+          touser: $('.toname').text(),
+          username: userData.username,
+          message: val
+        });
+        $('.msg').val('')
+      })
+
       socket.on('loginSuccess', function (data) {
         if (data == 'none') {
           alert("该用户名未注册，请先注册后再登录");
@@ -201,7 +189,11 @@
                 } else {
                   $('.friendsList').append('<li>' + user + '</li>')
                 }
-                $(this).remove();
+                if ($('.strangersList li').length == 1) {
+                  $('.strangersList li').eq(0).html('暂无陌生人')
+                } else {
+                  $(this).remove();
+                }
               }
             });
             return;
@@ -216,7 +208,6 @@
 
       socket.on('addStrangerSuccess', function (data) {
         var li = $('.strangersList li').eq(0).text();
-        console.log(userData.id)
         if (li.indexOf('暂无') > -1) {
           $('.strangersList').html('<li>' + data + '</li>')
         } else {
@@ -224,45 +215,38 @@
         }
       })
 
-      socket.on('addGroupSuccess', function (data, users) {
+      socket.on('addGroupSuccess', function (data) {
         var li = $('.groupsList li').eq(0).text();
 
         if (data == 'none') {
           alert('已经加入该房间！');
           return;
         }
-        var hasGroup = false;
-        for (var i=0; i<users.length; i++) {
-          if (users[i].id === userData.id) {
-            for(var j=0; j<users[i].groups.length; j++) {
-              if (users[i].groups[j] === data) {
-                hasGroup = true;
-                break;
-              } else {
-                hasGroup = false;
-              }
-            }
-          }
-        }
-        
-        if (!hasGroup) {
-          if (li.indexOf('暂无') > -1) {
-            $('.groupsList').html('<li>' + data + '</li>')
-          } else {
-            $('.groupsList').append('<li>' + data + '</li>')
-          }
+        if (li.indexOf('暂无') > -1) {
+          $('.groupsList').html('<li>' + data + '</li>')
+        } else {
+          $('.groupsList').append('<li>' + data + '</li>')
         }
       })
 
-      socket.on('receiveMessage', function (data) {
-        var msgElem = document.createElement('li');
-        msgElem.innerHTML = data.username + "：" + data.message;
-        if (data.username === logName.value) {
-          msgElem.className = "blue";
-        } else {
-          msgElem.className = "";
+      socket.on('sendMessage', function (data) {
+        var msgElem =  data.message + "：" +data.username;
+        $('.messages').append('<li class="blue">' + msgElem + '</li>');
+      });
+
+      socket.on('getMessage', function (data, user) {
+        var msgElem = data.username + "：" + data.message;
+        for (var i in user.friends) {
+          if (user.friends[i] === data.touser && ($('.friendsList li').eq(i).attr('class') !== 'act')) {
+            $('.friendsList li').eq(i).append('<span class="dot"></span>')
+          }
         }
-        msgs.appendChild(msgElem);
+        for (var i in user.strangers) {
+          if (user.strangers[i] === data.username && ($('.strangersList li').eq(i).attr('class') !== 'act')) {
+            $('.strangersList li').eq(i).append('<span class="dot"></span>')
+          }
+        }
+        $('.messages').append('<li>' + msgElem + '</li>');
       });
 
       function show2Hide(sel1, sel2) {
@@ -299,7 +283,17 @@
 
       function appendList(ul, data, type) {
         if (data[type].length == 0) {
-          $(ul).html('<li>暂无</li>');
+          switch(type){
+            case 'friends':
+              $(ul).html('<li>暂无朋友</li>');
+              break;
+            case 'groups':
+              $(ul).html('<li>暂无群聊</li>');
+              break;
+            case 'strangers':
+              $(ul).html('<li>暂无陌生人</li>');
+              break;
+          }
         } else {
           var str = "";
           for (var i = 0; i < data[type].length; i++) {
@@ -312,49 +306,49 @@
       function addSelBtn(sel) {
         $(sel).on('click', function () {
           $('.pop').show();
-          if (sel.indexOf('addFriend') > -1) {
-            $('.popCont h2').html('添加朋友')
-            $('.popCont input').attr('data-val', 'addFriend')
-          } else if (sel.indexOf('addGroup') > -1) {
-            $('.popCont h2').html('添加群聊')
-            $('.popCont input').attr('data-val', 'addGroup')
-          } else {
-            $('.popCont h2').html('加入群聊')
-            $('.popCont input').attr('data-val', 'joinGroup')
+          switch(sel){
+            case '.addFriend':
+              $('.popCont h2').html('添加朋友')
+              $('.popCont input').attr('data-val', 'addFriend');
+              break;
+            case '.addGroup':
+              $('.popCont h2').html('添加群聊')
+              $('.popCont input').attr('data-val', 'addGroup')
+              break;
+            case '.joinGroup':
+              $('.popCont h2').html('加入群聊')
+              $('.popCont input').attr('data-val', 'joinGroup')
+              break;
           }
         })
       }
 
       function broadcast(data, line) {
+        var li = $('.groupsList li').eq(0).text();
         if (line) {
           var hasGroup = false;
           if (data.user !== userData.username) {
-            $('#messages').append('<li>Admin：' + data.user + '上线了。</li>')
+            $('.messages').append('<li>Admin：' + data.user + '上线了。</li>')
           }
-          for (var i = 0; i < userData.groups.length; i++) {
-            if (userData.groups[i] === data.groupName) {
+          $('.groupsList li').each(function(){
+            if ($(this).text() === data.groupName) {
               hasGroup = true;
-              break;
+              return false;
             } else {
               hasGroup = false;
             }
-          }
+          })
           if (!hasGroup) {
-            $('.groupsList').append('<li>' + data.groupName + '</li>')
+            if (li.indexOf('暂无') > -1) {
+              $('.groupsList').html('<li>' + data.groupName + '</li>')
+            } else {
+              $('.groupsList').append('<li>' + data.groupName + '</li>')
+            }
           }
         } else {
-          $('#messages').append('<li>Admin：' + data.user + '下线了。</li>')
+          $('.messages').append('<li>Admin：' + data.user + '下线了。</li>')
         }
         //$('.onlineNum').html("当前在线人数：" + data.len);
-      }
-
-      function sendMessage() {
-        var msg = m.value;
-        socket.emit('chat message', {
-          username: logName.value,
-          message: msg
-        });
-        m.value = "";
       }
 
     })

@@ -1,0 +1,233 @@
+body {
+  font-family: 'Microsoft YaHei', Arial, sans-serif;
+  font-size: 14px;
+  color: #333;
+  background: #fff;
+}
+
+body,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+dl,
+dd {
+  margin: 0;
+}
+
+ul,
+ol,
+th,
+td,
+input,
+button {
+  padding: 0;
+}
+
+li {
+  list-style: none;
+}
+
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+  outline: none;
+}
+
+em,
+i {
+  font-style: normal;
+}
+
+input,
+button,
+select {
+  outline: none;
+}
+
+input[type="radio"]:checked+label:before,
+input[type="checkbox"]:checked+label:before {
+  content: '选择';
+  color: red;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+button {
+  border: none;
+  background: none;
+}
+
+textarea {
+  resize: none;
+  overflow-y: auto;
+}
+
+.clearfix:after {
+  content: "";
+  display: block;
+  height: 0;
+  visibility: hidden;
+  clear: both;
+}
+
+.clearfix {
+  zoom: 1;
+}
+
+.fl {
+  float: left;
+}
+
+.fr {
+  float: right;
+}
+
+#chat,
+#register,
+.container,
+.groupsList,
+.strangersList,
+.chatContent,
+.pop,
+.hide {
+  display: none;
+}
+
+.show {
+  display: block;
+}
+
+.act {
+  color: #fff;
+  background: #ccc;
+}
+
+#login, #register, .pop {
+  width: 300px;
+  margin: 50px auto;
+}
+
+.container {
+  width: 600px;
+  margin: 50px auto;
+  border: 1px solid #888;
+}
+
+.container > div {
+  height: 300px;
+  overflow-y: auto;
+}
+
+.userSettings button {
+  display: none;
+}
+
+.userSettings:hover button {
+  display: block;
+}
+
+.userInfo {
+  float: left;
+  width: 100px;
+  border-right: 1px solid #888;
+}
+
+.userData, .userSettings {
+  padding-left: 15px;
+}
+
+.userTag > div {
+  padding: 0 15px;
+}
+
+.userSettings {
+  position: relative;
+}
+
+.userSettingsBtn {
+  position: absolute;
+  left: 15px;
+  top: 20px;
+  border: 1px solid #888;
+}
+
+.friendsList > li, .groupsList > li, .strangersList > li {
+  padding: 0 15px;
+}
+
+.chatContent {
+  width: 398px;
+}
+
+.chatList {
+  width: 100px;
+  border-right: 1px solid #888;
+}
+
+.messages {
+  height: 258px;
+  border-top: 1px solid #888;
+  border-bottom: 1px solid #888;
+  overflow-y: auto;
+}
+
+.messages li {
+  width: 340px;
+  word-break: break-all;
+}
+
+.messages .blue {
+  text-align: right;
+  padding-left: 58px;
+  color: dodgerblue;
+}
+
+.msgForm input {
+  width: 310px;
+  padding: 0 10px;
+  border: none;
+  line-height: 21px;
+}
+
+.msgForm button {
+  width: 61px;
+  line-height: 21px;
+  border-left: 1px solid #888;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
