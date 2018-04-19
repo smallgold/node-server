@@ -118,7 +118,10 @@
         $('.pop').hide();
       })
 
-      $(document).on('click', '.friendsList li, .strangersList li', function(){
+      $(document).on('click', '.friendsList li, .strangersList li', function () {
+        if ($(this).text().indexOf('暂无') > -1) {
+          return false;
+        }
         $('.chatContent').show();
         $('.toname').html($(this).text());
         $(this).addClass('act');
@@ -230,7 +233,7 @@
       })
 
       socket.on('sendMessage', function (data) {
-        var msgElem =  data.message + "：" +data.username;
+        var msgElem = data.message + "：" + data.username;
         $('.messages').append('<li class="blue">' + msgElem + '</li>');
       });
 
@@ -283,7 +286,7 @@
 
       function appendList(ul, data, type) {
         if (data[type].length == 0) {
-          switch(type){
+          switch (type) {
             case 'friends':
               $(ul).html('<li>暂无朋友</li>');
               break;
@@ -306,7 +309,7 @@
       function addSelBtn(sel) {
         $(sel).on('click', function () {
           $('.pop').show();
-          switch(sel){
+          switch (sel) {
             case '.addFriend':
               $('.popCont h2').html('添加朋友')
               $('.popCont input').attr('data-val', 'addFriend');
@@ -330,7 +333,7 @@
           if (data.user !== userData.username) {
             $('.messages').append('<li>Admin：' + data.user + '上线了。</li>')
           }
-          $('.groupsList li').each(function(){
+          $('.groupsList li').each(function () {
             if ($(this).text() === data.groupName) {
               hasGroup = true;
               return false;
