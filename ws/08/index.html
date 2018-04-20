@@ -50,7 +50,7 @@
     </div>
     <div class="chatContent fl">
       <p class="toname"></p>
-      <ul class="messages"></ul>
+      <div class="messages"></div>
       <form class="msgForm">
         <input class="msg" />
         <button>Send</button>
@@ -119,22 +119,50 @@
       })
 
       $(document).on('click', '.friendsList li, .strangersList li', function () {
+        var toname = $(this).text();
         if ($(this).text().indexOf('暂无') > -1) {
           return false;
         }
+        if ($('.messages').find('.to-'+ toname ).length == 0) {
+          $('.messages').append('<ul class="to-'+ toname +'"></ul>');
+        }
         $('.chatContent').show();
-        $('.toname').html($(this).text());
-        $(this).addClass('act');
+        $('.toname').html(toname);
+        $(this).addClass('act').siblings().removeClass('act');
+        $(this).children('span').remove();
+        $('.messages .to-'+ toname).show().siblings().hide();
+      })
+
+      $(document).on('click', '.groupsList li', function () {
+        if ($(this).text().indexOf('暂无') > -1) {
+          return false;
+        }
+        if ($('.messages').find('.to-'+ toname ).length == 0) {
+          $('.messages').append('<ul class="to-'+ toname +'"></ul>');
+        }
+        $('.chatContent').show();
+        $('.toname').html(toname);
+        $(this).addClass('act').siblings().removeClass('act');
+        $(this).children('span').remove();
+        $('.messages .to-'+ toname).show().siblings().hide();
       })
 
       $('.msgForm').on('submit', function (e) {
         e.preventDefault();
         var val = $('.msg').val();
-        socket.emit('chat message', {
-          touser: $('.toname').text(),
-          username: userData.username,
-          message: val
-        });
+        if ($('.userTag').eq(1).attr('class') == 'act') {
+          socket.emit('group', {
+            touser: $('.toname').text(),
+            username: userData.username,
+            message: val,
+          });
+        } else {
+          socket.emit('private', {
+            touser: $('.toname').text(),
+            username: userData.username,
+            message: val,
+          });
+        }
         $('.msg').val('')
       })
 
@@ -234,13 +262,20 @@
 
       socket.on('sendMessage', function (data) {
         var msgElem = data.message + "：" + data.username;
-        $('.messages').append('<li class="blue">' + msgElem + '</li>');
+        var name = $('.friendsList .act').text() || $('.strangersList .act').text();
+        $('.messages .to-' + name).append('<li class="blue">' + msgElem + '</li>');
       });
 
       socket.on('getMessage', function (data, user) {
-        var msgElem = data.username + "：" + data.message;
+        var msgElem = '<li>' + data.username + "：" + data.message + '</li>';
+        if ($('.messages').find('.to-'+ data.username ).length == 0) {
+          $('.messages').append('<ul class="to-'+ data.username +'"></ul>');
+        }
+        console.log(data)
+        $('.messages .to-'+ data.username).append(msgElem);
+
         for (var i in user.friends) {
-          if (user.friends[i] === data.touser && ($('.friendsList li').eq(i).attr('class') !== 'act')) {
+          if (user.friends[i] === data.username && ($('.friendsList li').eq(i).attr('class') !== 'act')) {
             $('.friendsList li').eq(i).append('<span class="dot"></span>')
           }
         }
@@ -249,7 +284,6 @@
             $('.strangersList li').eq(i).append('<span class="dot"></span>')
           }
         }
-        $('.messages').append('<li>' + msgElem + '</li>');
       });
 
       function show2Hide(sel1, sel2) {

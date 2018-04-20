@@ -1,7 +1,33 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var users = []; // 所有用户
+var users = [
+  {
+    id: '',
+    avatar: '',
+    username: 'aaa',
+    messages: [],
+    friends: [],
+    groups: [],
+    strangers: [],
+  }, {
+    id: '',
+    avatar: '',
+    username: 'bbb',
+    messages: [],
+    friends: [],
+    groups: [],
+    strangers: [],
+  }, {
+    id: '',
+    avatar: '',
+    username: 'ccc',
+    messages: [],
+    friends: [],
+    groups: [],
+    strangers: [],
+  },
+]; // 所有用户
 var roomInfo = {} // 所有群聊
 
 
@@ -192,7 +218,7 @@ io.on('connection', function (socket) {
     io.to(roomID).emit('outline',postData) */
   });
 
-  socket.on('chat message', function (data) {
+  socket.on('private', function (data) {
     // 发送方
     for (var i in users) {
       if (users[i].username === data.username) {
@@ -210,6 +236,10 @@ io.on('connection', function (socket) {
         break;
       }
     }
+  });
+
+  socket.on('group', function (data) {
+    
   });
 });
 

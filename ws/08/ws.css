@@ -115,6 +115,14 @@ textarea {
   display: block;
 }
 
+.dot {
+  float: right;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #f00;
+}
+
 .act {
   color: #fff;
   background: #ccc;
@@ -186,6 +194,11 @@ textarea {
   height: 258px;
   border-top: 1px solid #888;
   border-bottom: 1px solid #888;
+  overflow-y: auto;
+}
+
+.messages ul {
+  display: none;
   overflow-y: auto;
 }
 
