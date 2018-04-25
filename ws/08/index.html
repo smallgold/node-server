@@ -118,33 +118,19 @@
         $('.pop').hide();
       })
 
-      $(document).on('click', '.friendsList li, .strangersList li', function () {
+      $(document).on('click', '.friendsList li, .strangersList li, .groupsList li', function () {
         var toname = $(this).text();
         if ($(this).text().indexOf('暂无') > -1) {
           return false;
         }
-        if ($('.messages').find('.to-'+ toname ).length == 0) {
-          $('.messages').append('<ul class="to-'+ toname +'"></ul>');
+        if ($('.messages').find('.to-' + toname).length == 0) {
+          $('.messages').append('<ul class="to-' + toname + '"></ul>');
         }
         $('.chatContent').show();
         $('.toname').html(toname);
         $(this).addClass('act').siblings().removeClass('act');
         $(this).children('span').remove();
-        $('.messages .to-'+ toname).show().siblings().hide();
-      })
-
-      $(document).on('click', '.groupsList li', function () {
-        if ($(this).text().indexOf('暂无') > -1) {
-          return false;
-        }
-        if ($('.messages').find('.to-'+ toname ).length == 0) {
-          $('.messages').append('<ul class="to-'+ toname +'"></ul>');
-        }
-        $('.chatContent').show();
-        $('.toname').html(toname);
-        $(this).addClass('act').siblings().removeClass('act');
-        $(this).children('span').remove();
-        $('.messages .to-'+ toname).show().siblings().hide();
+        $('.messages .to-' + toname).show().siblings().hide();
       })
 
       $('.msgForm').on('submit', function (e) {
@@ -262,17 +248,17 @@
 
       socket.on('sendMessage', function (data) {
         var msgElem = data.message + "：" + data.username;
-        var name = $('.friendsList .act').text() || $('.strangersList .act').text();
+        var name = $('.friendsList .act').text() || $('.strangersList .act').text() || $('.groupsList .act').text();
         $('.messages .to-' + name).append('<li class="blue">' + msgElem + '</li>');
       });
 
       socket.on('getMessage', function (data, user) {
         var msgElem = '<li>' + data.username + "：" + data.message + '</li>';
-        if ($('.messages').find('.to-'+ data.username ).length == 0) {
-          $('.messages').append('<ul class="to-'+ data.username +'"></ul>');
+        if ($('.messages').find('.to-' + data.username).length == 0) {
+          $('.messages').append('<ul class="to-' + data.username + '"></ul>');
         }
         console.log(data)
-        $('.messages .to-'+ data.username).append(msgElem);
+        $('.messages .to-' + data.username).append(msgElem);
 
         for (var i in user.friends) {
           if (user.friends[i] === data.username && ($('.friendsList li').eq(i).attr('class') !== 'act')) {
@@ -362,10 +348,11 @@
 
       function broadcast(data, line) {
         var li = $('.groupsList li').eq(0).text();
+        console.log(data,line)
         if (line) {
           var hasGroup = false;
           if (data.user !== userData.username) {
-            $('.messages').append('<li>Admin：' + data.user + '上线了。</li>')
+            $('.messages .to-' + li).append('<li>Admin：' + data.user + '上线了。</li>')
           }
           $('.groupsList li').each(function () {
             if ($(this).text() === data.groupName) {
@@ -383,7 +370,7 @@
             }
           }
         } else {
-          $('.messages').append('<li>Admin：' + data.user + '下线了。</li>')
+          $('.messages .to-' + li).append('<li>Admin：' + data.user + '下线了。</li>')
         }
         //$('.onlineNum').html("当前在线人数：" + data.len);
       }

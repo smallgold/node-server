@@ -151,7 +151,7 @@ io.on('connection', function (socket) {
     if (!roomInfo[data]) {
       roomInfo[data] = []
     }
-
+    console.log(socket.userNum)
     users[socket.userNum].groups.map((v) => {
       if (v === data) {
         socket.emit('addGroupSuccess', 'none');
@@ -239,7 +239,7 @@ io.on('connection', function (socket) {
   });
 
   socket.on('group', function (data) {
-    
+
   });
 });
 
