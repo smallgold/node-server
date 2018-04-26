@@ -123,28 +123,40 @@
         if ($(this).text().indexOf('暂无') > -1) {
           return false;
         }
-        if ($('.messages').find('.to-' + toname).length == 0) {
-          $('.messages').append('<ul class="to-' + toname + '"></ul>');
+        
+        if ($(this).parent().attr('class').indexOf('groupsList') > -1) {
+          if ($('.messages').find('.to-group-' + toname).length == 0) {
+            $('.messages').append('<ul class="to-group-' + toname + '"></ul>');
+          }
+          $('.messages .to-group-' + toname).show().siblings().hide();
+        } else {
+          if ($('.messages').find('.to-' + toname).length == 0) {
+            $('.messages').append('<ul class="to-' + toname + '"></ul>');
+          }
+          $('.messages .to-' + toname).show().siblings().hide();
         }
+
         $('.chatContent').show();
         $('.toname').html(toname);
         $(this).addClass('act').siblings().removeClass('act');
         $(this).children('span').remove();
-        $('.messages .to-' + toname).show().siblings().hide();
       })
 
       $('.msgForm').on('submit', function (e) {
         e.preventDefault();
         var val = $('.msg').val();
-        if ($('.userTag').eq(1).attr('class') == 'act') {
+        var name = $('.toname').text();
+        if ($('.userTag div').eq(1).attr('class') == 'act') {
           socket.emit('group', {
-            touser: $('.toname').text(),
+            touser: name,
             username: userData.username,
             message: val,
           });
+          var msgElem = val + "：" + userData.username;
+          $('.messages .to-group-' + name).append('<li class="blue">' + msgElem + '</li>');
         } else {
           socket.emit('private', {
-            touser: $('.toname').text(),
+            touser: name,
             username: userData.username,
             message: val,
           });
@@ -248,7 +260,7 @@
 
       socket.on('sendMessage', function (data) {
         var msgElem = data.message + "：" + data.username;
-        var name = $('.friendsList .act').text() || $('.strangersList .act').text() || $('.groupsList .act').text();
+        var name = $('.friendsList .act').text() || $('.strangersList .act').text();
         $('.messages .to-' + name).append('<li class="blue">' + msgElem + '</li>');
       });
 
@@ -269,6 +281,13 @@
           if (user.strangers[i] === data.username && ($('.strangersList li').eq(i).attr('class') !== 'act')) {
             $('.strangersList li').eq(i).append('<span class="dot"></span>')
           }
+        }
+      });
+
+      socket.on('groupchat', function (data) {
+        if (data.username !== userData.username) {
+          var msgElem = '<li>' + data.username + "：" + data.message + '</li>';
+          $('.messages .to-group-' + data.touser).append(msgElem);
         }
       });
 
@@ -348,7 +367,6 @@
 
       function broadcast(data, line) {
         var li = $('.groupsList li').eq(0).text();
-        console.log(data,line)
         if (line) {
           var hasGroup = false;
           if (data.user !== userData.username) {
